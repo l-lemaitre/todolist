@@ -1,0 +1,30 @@
+AppBundle\Entity\Task:
+  properties:
+    title:
+      - NotBlank: ~
+      - Length:
+          max: 255
+          maxMessage: 'Your title cannot be longer than {{ limit }} characters.'
+    content:
+      - NotBlank: ~
+
+AppBundle\Entity\User:
+  constraints:
+    #- Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity: username
+    #- Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity: email
+  properties:
+    username:
+      - NotBlank: ~
+      - Length:
+          max: 25
+          maxMessage: 'Your username cannot be longer than {{ limit }} characters.'
+    password:
+      - Length:
+          max: 64
+          maxMessage: 'Your password cannot be longer than {{ limit }} characters.'
+    email:
+      - NotBlank: ~
+      - Email: ~
+      - Length:
+          max: 60
+          maxMessage: 'Your e-mail cannot be longer than {{ limit }} characters.'
