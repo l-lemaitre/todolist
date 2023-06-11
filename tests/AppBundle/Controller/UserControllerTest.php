@@ -6,7 +6,7 @@ use AppBundle\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Tests\AppBundle\NeedLogin;
+use Tests\AppBundle\Service\NeedLogin;
 
 class UserControllerTest extends WebTestCase
 {
@@ -18,6 +18,12 @@ class UserControllerTest extends WebTestCase
 
     public function setUp()
     {
+        self::bootKernel();
+
+        $this->truncateEntities([
+            User::class
+        ]);
+
         $client = static::createClient();
 
         $userData = [
@@ -40,8 +46,6 @@ class UserControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        //$this->login($client, $this->user);
-
         $urlGenerator = $client->getContainer()->get('router');
 
         $client->request(Request::METHOD_GET, $urlGenerator->generate('user_list'));
@@ -56,8 +60,6 @@ class UserControllerTest extends WebTestCase
     public function testCreateAction()
     {
         $client = static::createClient();
-
-        //$this->login($client, $this->user);
 
         $urlGenerator = $client->getContainer()->get('router');
 
@@ -160,11 +162,9 @@ class UserControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        //$this->login($client, $this->user);
-
         $urlGenerator = $client->getContainer()->get('router');
 
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 3]));
+        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -199,7 +199,7 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $client->getContainer()->get('router');
 
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 3]));
+        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -232,7 +232,7 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $client->getContainer()->get('router');
 
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 3]));
+        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -257,6 +257,31 @@ class UserControllerTest extends WebTestCase
         $this->assertEquals('Vestibulum et euismod erat. Maecenas porta mattis interdum. Fusce non.', $formValues['user[password][first]']);
         $this->assertEquals('Vestibulum et euismod erat. Maecenas porta mattis interdum. Fusce non.', $formValues['user[password][second]']);
         $this->assertEquals('aeneanluctusmagnavelportalaoreetdiamvelitluctusjusto@gmail.com', $formValues['user[email]']);
+    }
+
+    private function getEntityManager()
+    {
+        return self::$kernel->getContainer()
+            ->get('doctrine')
+            ->getManager();
+    }
+
+    private function truncateEntities(array $entities)
+    {
+        $connection = $this->getEntityManager()->getConnection();
+        $databasePlatform = $connection->getDatabasePlatform();
+        if ($databasePlatform->supportsForeignKeyConstraints()) {
+            $connection->query('SET FOREIGN_KEY_CHECKS=0');
+        }
+        foreach ($entities as $entity) {
+            $query = $databasePlatform->getTruncateTableSQL(
+                $this->getEntityManager()->getClassMetadata($entity)->getTableName()
+            );
+            $connection->executeUpdate($query);
+        }
+        if ($databasePlatform->supportsForeignKeyConstraints()) {
+            $connection->query('SET FOREIGN_KEY_CHECKS=1');
+        }
     }
 
     public function tearDown()

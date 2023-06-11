@@ -3,10 +3,11 @@
 namespace Tests\AppBundle\Controller;
 
 use AppBundle\Entity\User;
+use AppBundle\Entity\Task;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Tests\AppBundle\NeedLogin;
+use Tests\AppBundle\Service\NeedLogin;
 
 class TaskControllerTest extends WebTestCase
 {
@@ -18,21 +19,37 @@ class TaskControllerTest extends WebTestCase
 
     public function setUp()
     {
+        self::bootKernel();
+
+        $this->truncateEntities([
+            User::class,
+            Task::class
+        ]);
+
         $client = static::createClient();
+
+        $this->manager = $client->getContainer()->get('doctrine.orm.entity_manager');
 
         $userData = [
             'username' => 'User',
             'password' => '$2y$13$cx7WfZ3C24BccB0a9PuXCeyNCtPsxbMcCdUXh0ARBXap6HXgMiD.u',
             'email' => 'user@orange.fr'
         ];
-
         $this->user = new User();
         $this->user->setUsername($userData['username']);
         $this->user->setPassword($userData['password']);
         $this->user->setEmail($userData['email']);
-
-        $this->manager = $client->getContainer()->get('doctrine.orm.entity_manager');
         $this->manager->persist($this->user);
+
+        $taskData = [
+            'title' => 'Test',
+            'content' => 'Test.'
+        ];
+        $task = new Task();
+        $task->setTitle($taskData['title']);
+        $task->setContent($taskData['content']);
+        $this->manager->persist($task);
+
         $this->manager->flush();
     }
 
@@ -236,6 +253,31 @@ class TaskControllerTest extends WebTestCase
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
         $this->assertContains('La tâche a bien été supprimée.', $client->getResponse()->getContent());
+    }
+
+    private function getEntityManager()
+    {
+        return self::$kernel->getContainer()
+            ->get('doctrine')
+            ->getManager();
+    }
+
+    private function truncateEntities(array $entities)
+    {
+        $connection = $this->getEntityManager()->getConnection();
+        $databasePlatform = $connection->getDatabasePlatform();
+        if ($databasePlatform->supportsForeignKeyConstraints()) {
+            $connection->query('SET FOREIGN_KEY_CHECKS=0');
+        }
+        foreach ($entities as $entity) {
+            $query = $databasePlatform->getTruncateTableSQL(
+                $this->getEntityManager()->getClassMetadata($entity)->getTableName()
+            );
+            $connection->executeUpdate($query);
+        }
+        if ($databasePlatform->supportsForeignKeyConstraints()) {
+            $connection->query('SET FOREIGN_KEY_CHECKS=1');
+        }
     }
 
     public function tearDown()
