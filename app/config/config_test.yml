@@ -14,3 +14,10 @@ web_profiler:
 
 swiftmailer:
     disable_delivery: true
+
+doctrine:
+    dbal:
+        host:     mysqldb
+        dbname:   todolist_test
+        user:     nerofaust
+        password: hatsune55

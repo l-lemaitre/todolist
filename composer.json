@@ -29,7 +29,8 @@
         "sensio/framework-extra-bundle": "^3.0.2",
         "incenteev/composer-parameter-handler": "^2.0",
         "symfony/web-server-bundle": "3.3.0-BETA1",
-        "symfony/validator": "*"
+        "symfony/validator": "*",
+        "symfony/orm-pack": "^2.3"
     },
     "require-dev": {
         "sensio/generator-bundle": "^3.0",
