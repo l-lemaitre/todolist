@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\AppBundle;
+namespace Tests\AppBundle\Service;
 
 use AppBundle\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Client;

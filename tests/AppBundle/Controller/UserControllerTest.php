@@ -12,9 +12,11 @@ class UserControllerTest extends WebTestCase
 {
     use NeedLogin;
 
-    private $user;
+    private $client = null;
 
-    private $manager;
+    private $manager = null;
+
+    private $user = null;
 
     public function setUp()
     {
@@ -24,7 +26,7 @@ class UserControllerTest extends WebTestCase
             User::class
         ]);
 
-        $client = static::createClient();
+        $this->client = static::createClient();
 
         $userData = [
             'username' => 'User',
@@ -37,33 +39,29 @@ class UserControllerTest extends WebTestCase
         $this->user->setPassword($userData['password']);
         $this->user->setEmail($userData['email']);
 
-        $this->manager = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $this->manager = $this->client->getContainer()->get('doctrine.orm.entity_manager');
         $this->manager->persist($this->user);
         $this->manager->flush();
     }
 
     public function testListAction()
     {
-        $client = static::createClient();
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $client->request(Request::METHOD_GET, $urlGenerator->generate('user_list'));
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_list'));
 
         $response = new Response();
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertContains('Liste des utilisateurs', $client->getResponse()->getContent());
+        $this->assertContains('Liste des utilisateurs', $this->client->getResponse()->getContent());
     }
 
     public function testCreateAction()
     {
-        $client = static::createClient();
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
 
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
@@ -74,31 +72,32 @@ class UserControllerTest extends WebTestCase
             'user[email]' => 'user2@orange.fr'
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
-        $client->followRedirect();
+        $this->client->followRedirect();
 
         $response = new Response();
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertContains('L&#039;utilisateur a bien été ajouté.', $client->getResponse()->getContent());
+        $this->assertContains('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
 
-        $this->assertEquals('User2', $formValues['user[username]']);
-        $this->assertEquals('motdepasse', $formValues['user[password][first]']);
-        $this->assertEquals('motdepasse', $formValues['user[password][second]']);
-        $this->assertEquals('user2@orange.fr', $formValues['user[email]']);
+        $user = $this->manager->getRepository('AppBundle:User')->find(2);
+
+        $passwordVerification = $this->client->getContainer()->get('security.password_encoder')->isPasswordValid($user, $formValues['user[password][first]'], $user->getSalt());
+
+        $this->assertEquals($formValues['user[username]'], $user->getUsername());
+        $this->assertTrue($passwordVerification);
+        $this->assertEquals($formValues['user[email]'], $user->getEmail());
     }
 
     public function testCreateActionBlank()
     {
-        $client = static::createClient();
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
 
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
@@ -109,7 +108,7 @@ class UserControllerTest extends WebTestCase
             'user[email]' => ''
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
@@ -117,21 +116,14 @@ class UserControllerTest extends WebTestCase
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertNotContains('L&#039;utilisateur a bien été ajouté.', $client->getResponse()->getContent());
-
-        $this->assertEquals('', $formValues['user[username]']);
-        $this->assertEquals('', $formValues['user[password][first]']);
-        $this->assertEquals('', $formValues['user[password][second]']);
-        $this->assertEquals('', $formValues['user[email]']);
+        $this->assertNotContains('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
     }
 
     public function testCreateActionMaxFields()
     {
-        $client = static::createClient();
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
 
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
@@ -142,7 +134,7 @@ class UserControllerTest extends WebTestCase
             'user[email]' => 'aeneanluctusmagnavelportalaoreetdiamvelitluctusjusto@gmail.com'
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
@@ -150,56 +142,50 @@ class UserControllerTest extends WebTestCase
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertNotContains('L&#039;utilisateur a bien été modifié.', $client->getResponse()->getContent());
-
-        $this->assertEquals('Nullamnullaturpisornaresedex', $formValues['user[username]']);
-        $this->assertEquals('Vestibulum et euismod erat. Maecenas porta mattis interdum. Fusce non.', $formValues['user[password][first]']);
-        $this->assertEquals('Vestibulum et euismod erat. Maecenas porta mattis interdum. Fusce non.', $formValues['user[password][second]']);
-        $this->assertEquals('aeneanluctusmagnavelportalaoreetdiamvelitluctusjusto@gmail.com', $formValues['user[email]']);
+        $this->assertNotContains('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
     }
 
     public function testEditAction()
     {
-        $client = static::createClient();
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
         $form = $buttonCrawlerNode->form([
             'user[username]' => 'Ludovic Edit',
-            'user[password][first]' => 'motdepasse',
-            'user[password][second]' => 'motdepasse',
+            'user[password][first]' => 'motdepasseedit',
+            'user[password][second]' => 'motdepasseedit',
             'user[email]' => 'ludoviclemaitreedit@orange.fr'
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
-        $client->followRedirect();
+        $this->client->followRedirect();
 
         $response = new Response();
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertContains('L&#039;utilisateur a bien été modifié.', $client->getResponse()->getContent());
+        $this->assertContains('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
 
-        $this->assertEquals('Ludovic Edit', $formValues['user[username]']);
-        $this->assertEquals('motdepasse', $formValues['user[password][first]']);
-        $this->assertEquals('motdepasse', $formValues['user[password][second]']);
-        $this->assertEquals('ludoviclemaitreedit@orange.fr', $formValues['user[email]']);
+        $user = $this->manager->getRepository('AppBundle:User')->find(1);
+
+        $passwordVerification = $this->client->getContainer()->get('security.password_encoder')->isPasswordValid($user, $formValues['user[password][first]'], $user->getSalt());
+
+        $this->assertEquals($formValues['user[username]'], $user->getUsername());
+        $this->assertTrue($passwordVerification);
+        $this->assertEquals($formValues['user[email]'], $user->getEmail());
     }
 
     public function testEditActionBlank()
     {
-        $client = static::createClient();
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -210,7 +196,7 @@ class UserControllerTest extends WebTestCase
             'user[email]' => ''
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
@@ -218,21 +204,22 @@ class UserControllerTest extends WebTestCase
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertNotContains('L&#039;utilisateur a bien été modifié.', $client->getResponse()->getContent());
+        $this->assertNotContains('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
 
-        $this->assertEquals('', $formValues['user[username]']);
-        $this->assertEquals('', $formValues['user[password][first]']);
-        $this->assertEquals('', $formValues['user[password][second]']);
-        $this->assertEquals('', $formValues['user[email]']);
+        $user = $this->manager->getRepository('AppBundle:User')->find(1);
+
+        $passwordVerification = $this->client->getContainer()->get('security.password_encoder')->isPasswordValid($user, $formValues['user[password][first]'], $user->getSalt());
+
+        $this->assertNotEmpty($user->getUsername());
+        $this->assertFalse($passwordVerification);
+        $this->assertNotEmpty($user->getEmail());
     }
 
     public function testEditActionMaxFields()
     {
-        $client = static::createClient();
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -243,7 +230,7 @@ class UserControllerTest extends WebTestCase
             'user[email]' => 'aeneanluctusmagnavelportalaoreetdiamvelitluctusjusto@gmail.com'
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
@@ -251,12 +238,15 @@ class UserControllerTest extends WebTestCase
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertNotContains('L&#039;utilisateur a bien été modifié.', $client->getResponse()->getContent());
+        $this->assertNotContains('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
 
-        $this->assertEquals('Nullamnullaturpisornaresedex', $formValues['user[username]']);
-        $this->assertEquals('Vestibulum et euismod erat. Maecenas porta mattis interdum. Fusce non.', $formValues['user[password][first]']);
-        $this->assertEquals('Vestibulum et euismod erat. Maecenas porta mattis interdum. Fusce non.', $formValues['user[password][second]']);
-        $this->assertEquals('aeneanluctusmagnavelportalaoreetdiamvelitluctusjusto@gmail.com', $formValues['user[email]']);
+        $user = $this->manager->getRepository('AppBundle:User')->find(1);
+
+        $passwordVerification = $this->client->getContainer()->get('security.password_encoder')->isPasswordValid($user, $formValues['user[password][first]'], $user->getSalt());
+
+        $this->assertNotEquals($formValues['user[username]'], $user->getUsername());
+        $this->assertFalse($passwordVerification);
+        $this->assertNotEquals($formValues['user[email]'], $user->getEmail());
     }
 
     private function getEntityManager()

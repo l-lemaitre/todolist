@@ -13,9 +13,11 @@ class TaskControllerTest extends WebTestCase
 {
     use NeedLogin;
 
-    private $user;
+    private $client = null;
 
-    private $manager;
+    private $manager = null;
+
+    private $user = null;
 
     public function setUp()
     {
@@ -26,9 +28,9 @@ class TaskControllerTest extends WebTestCase
             Task::class
         ]);
 
-        $client = static::createClient();
+        $this->client = static::createClient();
 
-        $this->manager = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $this->manager = $this->client->getContainer()->get('doctrine.orm.entity_manager');
 
         $userData = [
             'username' => 'User',
@@ -55,47 +57,41 @@ class TaskControllerTest extends WebTestCase
 
     public function testListAction()
     {
-        $client = static::createClient();
+        $this->login($this->client, $this->user);
 
-        $this->login($client, $this->user);
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $client->request(Request::METHOD_GET, $urlGenerator->generate('task_list'));
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('task_list'));
 
         $response = new Response();
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertContains('Créer une tâche', $client->getResponse()->getContent());
+        $this->assertContains('Créer une tâche', $this->client->getResponse()->getContent());
     }
 
     public function testListActionNoLogin()
     {
-        $client = static::createClient();
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('task_list'));
 
-        $client->request(Request::METHOD_GET, $urlGenerator->generate('task_list'));
-
-        $client->followRedirect();
+        $this->client->followRedirect();
 
         $response = new Response();
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertNotContains('Créer une tâche', $client->getResponse()->getContent());
+        $this->assertNotContains('Créer une tâche', $this->client->getResponse()->getContent());
     }
 
     public function testCreateAction()
     {
-        $client = static::createClient();
+        $this->login($this->client, $this->user);
 
-        $this->login($client, $this->user);
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('task_create'));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('task_create'));
 
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
@@ -104,31 +100,31 @@ class TaskControllerTest extends WebTestCase
             'task[content]' => 'Aller au supermarché.'
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
-        $client->followRedirect();
+        $this->client->followRedirect();
 
         $response = new Response();
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertContains('La tâche a bien été ajoutée.', $client->getResponse()->getContent());
+        $this->assertContains('La tâche a bien été ajoutée.', $this->client->getResponse()->getContent());
 
-        $this->assertEquals('Courses', $formValues['task[title]']);
-        $this->assertEquals('Aller au supermarché.', $formValues['task[content]']);
+        $task = $this->manager->getRepository('AppBundle:Task')->find(2);
+
+        $this->assertEquals($formValues['task[title]'], $task->getTitle());
+        $this->assertEquals($formValues['task[content]'], $task->getContent());
     }
 
     public function testCreateActionBlank()
     {
-        $client = static::createClient();
+        $this->login($this->client, $this->user);
 
-        $this->login($client, $this->user);
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('task_create'));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('task_create'));
 
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
@@ -137,7 +133,7 @@ class TaskControllerTest extends WebTestCase
             'task[content]' => ''
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
@@ -145,21 +141,16 @@ class TaskControllerTest extends WebTestCase
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertNotContains('La tâche a bien été ajoutée.', $client->getResponse()->getContent());
-
-        $this->assertEquals('', $formValues['task[title]']);
-        $this->assertEquals('', $formValues['task[content]']);
+        $this->assertNotContains('La tâche a bien été ajoutée.', $this->client->getResponse()->getContent());
     }
 
     public function testEditAction()
     {
-        $client = static::createClient();
+        $this->login($this->client, $this->user);
 
-        $this->login($client, $this->user);
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('task_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('task_edit', ['id' => 1]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -168,31 +159,31 @@ class TaskControllerTest extends WebTestCase
             'task[content]' => 'Test edit.'
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
-        $client->followRedirect();
+        $this->client->followRedirect();
 
         $response = new Response();
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertContains('La tâche a bien été modifiée.', $client->getResponse()->getContent());
+        $this->assertContains('La tâche a bien été modifiée.', $this->client->getResponse()->getContent());
 
-        $this->assertEquals('Test edit', $formValues['task[title]']);
-        $this->assertEquals('Test edit.', $formValues['task[content]']);
+        $task = $this->manager->getRepository('AppBundle:Task')->find(1);
+
+        $this->assertEquals($formValues['task[title]'], $task->getTitle());
+        $this->assertEquals($formValues['task[content]'], $task->getContent());
     }
 
     public function testEditActionBlank()
     {
-        $client = static::createClient();
+        $this->login($this->client, $this->user);
 
-        $this->login($client, $this->user);
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $crawler = $client->request(Request::METHOD_GET, $urlGenerator->generate('task_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('task_edit', ['id' => 1]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -201,7 +192,7 @@ class TaskControllerTest extends WebTestCase
             'task[content]' => ''
         ]);
 
-        $client->submit($form);
+        $this->client->submit($form);
 
         $formValues = $form->getValues();
 
@@ -209,50 +200,54 @@ class TaskControllerTest extends WebTestCase
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertNotContains('La tâche a bien été modifiée.', $client->getResponse()->getContent());
+        $this->assertNotContains('La tâche a bien été modifiée.', $this->client->getResponse()->getContent());
 
-        $this->assertEquals('', $formValues['task[title]']);
-        $this->assertEquals('', $formValues['task[content]']);
+        $task = $this->manager->getRepository('AppBundle:Task')->find(1);
+
+        $this->assertNotEmpty($task->getTitle());
+        $this->assertNotEmpty($task->getContent());
     }
 
     public function testToggleTaskAction()
     {
-        $client = static::createClient();
+        $this->login($this->client, $this->user);
 
-        $this->login($client, $this->user);
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
-
-        $client->request(Request::METHOD_GET, $urlGenerator->generate('task_toggle', ['id' => 1]));
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('task_toggle', ['id' => 1]));
 
         $task = $this->manager->getRepository('AppBundle:Task')->find(1);
 
-        $client->followRedirect();
+        $this->client->followRedirect();
 
         $response = new Response();
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertContains('La tâche ' . $task->getTitle() . ' a bien été marquée comme faite.', $client->getResponse()->getContent());
+        $this->assertContains('La tâche ' . $task->getTitle() . ' a bien été marquée comme faite.', $this->client->getResponse()->getContent());
+
+        $this->assertTrue($task->getIsDone());
     }
 
     public function testDeleteTaskAction()
     {
-        $client = static::createClient();
+        $this->login($this->client, $this->user);
 
-        $this->login($client, $this->user);
+        $urlGenerator = $this->client->getContainer()->get('router');
 
-        $urlGenerator = $client->getContainer()->get('router');
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('task_delete', ['id' => 1]));
 
-        $client->request(Request::METHOD_GET, $urlGenerator->generate('task_delete', ['id' => 1]));
-
-        $client->followRedirect();
+        $this->client->followRedirect();
 
         $response = new Response();
 
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
-        $this->assertContains('La tâche a bien été supprimée.', $client->getResponse()->getContent());
+        $this->assertContains('La tâche a bien été supprimée.', $this->client->getResponse()->getContent());
+
+        $task = $this->manager->getRepository('AppBundle:Task')->find(1);
+
+        $this->assertNull($task);
     }
 
     private function getEntityManager()
