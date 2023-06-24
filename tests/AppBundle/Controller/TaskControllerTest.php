@@ -2,8 +2,8 @@
 
 namespace Tests\AppBundle\Controller;
 
-use AppBundle\Entity\User;
-use AppBundle\Entity\Task;
+use App\AppBundle\Entity\User;
+use App\AppBundle\Entity\Task;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

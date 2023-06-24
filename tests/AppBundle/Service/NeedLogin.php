@@ -2,7 +2,7 @@
 
 namespace Tests\AppBundle\Service;
 
-use AppBundle\Entity\User;
+use App\AppBundle\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Client;
 use Symfony\Component\BrowserKit\Cookie;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
