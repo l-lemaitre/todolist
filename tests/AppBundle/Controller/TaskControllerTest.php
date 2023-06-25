@@ -122,6 +122,8 @@ class TaskControllerTest extends WebTestCase
     {
         $this->login($this->client, $this->user);
 
+        $countTasksBeforeTest = $this->getCountTasks();
+
         $urlGenerator = $this->client->getContainer()->get('router');
 
         $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('task_create'));
@@ -142,6 +144,10 @@ class TaskControllerTest extends WebTestCase
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
         $this->assertNotContains('La tâche a bien été ajoutée.', $this->client->getResponse()->getContent());
+
+        $countTasksAfterTest = $this->getCountTasks();
+
+        $this->assertEquals($countTasksBeforeTest, $countTasksAfterTest);
     }
 
     public function testEditAction()
@@ -248,6 +254,15 @@ class TaskControllerTest extends WebTestCase
         $task = $this->manager->getRepository('AppBundle:Task')->find(1);
 
         $this->assertNull($task);
+    }
+
+    public function getCountTasks()
+    {
+        $queryBuilder = $this->manager->createQueryBuilder();
+        $queryBuilder->select('count(task.id)');
+        $queryBuilder->from('AppBundle:Task','task');
+
+        return $queryBuilder->getQuery()->getSingleScalarResult();
     }
 
     private function getEntityManager()
