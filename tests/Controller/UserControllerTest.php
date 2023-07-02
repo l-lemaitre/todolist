@@ -95,6 +95,8 @@ class UserControllerTest extends WebTestCase
 
     public function testCreateActionBlank()
     {
+        $countUsersBeforeTest = $this->getCountUsers();
+
         $urlGenerator = $this->client->getContainer()->get('router');
 
         $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
@@ -117,10 +119,16 @@ class UserControllerTest extends WebTestCase
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
         $this->assertNotContains('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
+
+        $countUsersAfterTest = $this->getCountUsers();
+
+        $this->assertEquals($countUsersBeforeTest, $countUsersAfterTest);
     }
 
-    public function testCreateActionMaxFields()
+    public function testCreateActionBeyondMaxFields()
     {
+        $countUsersBeforeTest = $this->getCountUsers();
+
         $urlGenerator = $this->client->getContainer()->get('router');
 
         $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
@@ -143,6 +151,10 @@ class UserControllerTest extends WebTestCase
         $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
 
         $this->assertNotContains('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
+
+        $countUsersAfterTest = $this->getCountUsers();
+
+        $this->assertEquals($countUsersBeforeTest, $countUsersAfterTest);
     }
 
     public function testEditAction()
@@ -215,7 +227,7 @@ class UserControllerTest extends WebTestCase
         $this->assertNotEmpty($user->getEmail());
     }
 
-    public function testEditActionMaxFields()
+    public function testEditActionBeyondMaxFields()
     {
         $urlGenerator = $this->client->getContainer()->get('router');
 
@@ -247,6 +259,15 @@ class UserControllerTest extends WebTestCase
         $this->assertNotEquals($formValues['user[username]'], $user->getUsername());
         $this->assertFalse($passwordVerification);
         $this->assertNotEquals($formValues['user[email]'], $user->getEmail());
+    }
+
+    public function getCountUsers()
+    {
+        $queryBuilder = $this->manager->createQueryBuilder();
+        $queryBuilder->select('count(user.id)');
+        $queryBuilder->from('AppBundle:User','user');
+
+        return $queryBuilder->getQuery()->getSingleScalarResult();
     }
 
     private function getEntityManager()
