@@ -6,25 +6,25 @@ controllers:
 
 app_homepage:
     path: /
-    controller: App\AppBundle\Controller\DefaultController::indexAction
+    controller: App\Controller\DefaultController::indexAction
     methods: GET
 
 app_login:
     path: /login
-    controller: App\AppBundle\Controller\SecurityController::loginAction
+    controller: App\Security\SecurityController::loginAction
     methods: [GET, POST]
 
 app_login_check:
     path: /login_check
-    controller: App\AppBundle\Controller\SecurityController::loginCheck
-    methods: [GET]
+    controller: App\Controller\SecurityController::loginCheck
+    methods: [POST]
 
 app_logout:
     path: /logout
-    controller: App\AppBundle\Controller\SecurityController::logoutCheck
+    controller: App\Controller\SecurityController::logoutCheck
     methods: [GET]
 
 app_user_create:
     path: /users/create
-    controller: App\AppBundle\Controller\UserController::createAction
+    controller: App\Controller\UserController::createAction
     methods: [GET, POST]
