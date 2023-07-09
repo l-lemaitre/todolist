@@ -14,7 +14,8 @@ class DefaultControllerTest extends WebTestCase
 
         $client->followRedirect();
 
-        $this->assertEquals(200, $client->getResponse()->getStatusCode());
-        $this->assertContains('To Do List app', $client->getResponse()->getContent());
+        $this->assertResponseIsSuccessful();
+
+        $this->assertStringContainsString('To Do List app', $client->getResponse()->getContent());
     }
 }

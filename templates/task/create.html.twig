@@ -2,7 +2,7 @@
 
 {% block body %}
     <div class="row">
-        {{ form_start(form, {'action' : path('task_create')}) }}
+        {{ form_start(form, {'action' : path('app_task_create')}) }}
             <div class="form-group">
                 {{ form_row(form.title, { 'attr' : { 'class': 'form-control' } }) }}
             </div>
@@ -11,6 +11,6 @@
             </div>
             <button type="submit" class="btn btn-success pull-right">Ajouter</button>
         {{ form_end(form) }}
-        <a href="{{ path('task_list') }}" class="btn btn-primary">Retour à la liste des tâches</a>
+        <a href="{{ path('app_task_list') }}" class="btn btn-primary">Retour à la liste des tâches</a>
     </div>
 {% endblock %}

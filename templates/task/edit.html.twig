@@ -2,10 +2,15 @@
 
 {% block body %}
     <div class="row">
-        {{ form_start(form, {'action' : path('task_edit', { 'id' : task.id })}) }}
-            {{ form_widget(form) }}
-
+        {{ form_start(form, {'action' : path('app_task_edit', { 'id' : task.id })}) }}
+            <div class="form-group">
+                {{ form_row(form.title, { 'attr' : { 'class': 'form-control' } }) }}
+            </div>
+            <div class="form-group">
+                {{ form_row(form.content, { 'attr' : { 'class': 'form-control' } }) }}
+            </div>
             <button type="submit" class="btn btn-success pull-right">Modifier</button>
         {{ form_end(form) }}
+        <a href="{{ path('app_task_list') }}" class="btn btn-primary">Retour à la liste des tâches</a>
     </div>
 {% endblock %}

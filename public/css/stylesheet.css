@@ -4,6 +4,7 @@
  * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap/blob/gh-pages/LICENSE)
  */
 
+/* HOMEPAGE */
 body {
     padding-top: 70px; /* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
 }
@@ -51,4 +52,11 @@ body {
 
 footer {
     margin: 50px 0;
+}
+
+/* TASK LIST */
+
+.action-buttons {
+    display: flex;
+    justify-content: space-around;
 }
