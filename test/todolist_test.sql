@@ -10,6 +10,7 @@
 # Generation Time: 2023-05-20 11:39:18 +0000
 # ************************************************************
 
+CREATE DATABASE IF NOT EXISTS todolist_test;
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
