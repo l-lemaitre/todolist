@@ -169,7 +169,7 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -190,7 +190,7 @@ class UserControllerTest extends WebTestCase
 
         $this->assertStringContainsString('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
 
-        $user = $this->entityManager->getRepository(User::class)->find(1);
+        $user = $this->entityManager->getRepository(User::class)->find($this->user->getId());
 
         $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
 
@@ -205,7 +205,7 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -224,7 +224,7 @@ class UserControllerTest extends WebTestCase
 
         $this->assertStringNotContainsString('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
 
-        $user = $this->entityManager->getRepository(User::class)->find(1);
+        $user = $this->entityManager->getRepository(User::class)->find($this->user->getId());
 
         $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
 
@@ -239,7 +239,7 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -258,7 +258,7 @@ class UserControllerTest extends WebTestCase
 
         $this->assertStringNotContainsString('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
 
-        $user = $this->entityManager->getRepository(User::class)->find(1);
+        $user = $this->entityManager->getRepository(User::class)->find($this->user->getId());
 
         $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
 
@@ -285,7 +285,7 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_delete', ['id' => 2]));
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_delete', ['id' => $user->getId()]));
 
         $this->client->followRedirect();
 

@@ -55,6 +55,13 @@ footer {
 }
 
 /* TASK LIST */
+.create-task-btn {
+    padding-bottom: 3.5rem;
+}
+
+.thumbnail {
+    margin-top: 2rem;
+}
 
 .action-buttons {
     display: flex;

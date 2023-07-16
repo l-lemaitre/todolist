@@ -153,7 +153,7 @@ class TaskControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_edit', ['id' => $this->task->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -172,7 +172,7 @@ class TaskControllerTest extends WebTestCase
 
         $this->assertStringContainsString('La tâche a bien été modifiée.', $this->client->getResponse()->getContent());
 
-        $task = $this->entityManager->getRepository(Task::class)->find(1);
+        $task = $this->entityManager->getRepository(Task::class)->find($this->task->getId());
 
         $this->assertEquals($formValues['task[title]'], $task->getTitle());
         $this->assertEquals($formValues['task[content]'], $task->getContent());
@@ -184,7 +184,7 @@ class TaskControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_edit', ['id' => $this->task->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -199,7 +199,7 @@ class TaskControllerTest extends WebTestCase
 
         $this->assertStringNotContainsString('La tâche a bien été modifiée.', $this->client->getResponse()->getContent());
 
-        $task = $this->entityManager->getRepository(Task::class)->find(1);
+        $task = $this->entityManager->getRepository(Task::class)->find($this->task->getId());
 
         $this->assertNotEmpty($task->getTitle());
         $this->assertNotEmpty($task->getContent());
@@ -211,15 +211,15 @@ class TaskControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_toggle', ['id' => 1]));
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_toggle', ['id' => $this->task->getId()]));
 
-        $task = $this->entityManager->getRepository(Task::class)->find(1);
+        $task = $this->entityManager->getRepository(Task::class)->find($this->task->getId());
 
         $this->client->followRedirect();
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringContainsString('La tâche ' . $task->getTitle() . ' a bien été marquée comme faite.', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString('La tâche ' . $task->getTitle() . ' a bien été marquée comme terminée.', $this->client->getResponse()->getContent());
 
         $this->assertTrue($task->getIsDone());
     }
@@ -230,7 +230,7 @@ class TaskControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_delete', ['id' => 1]));
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_delete', ['id' => $this->task->getId()]));
 
         $this->client->followRedirect();
 

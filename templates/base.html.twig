@@ -41,6 +41,10 @@
                 <a href="{{ path('app_user_create') }}" class="btn btn-primary">Créer un utilisateur</a>
 
                 {% if app.user %}
+                    <a href="{{ path('app_user_list') }}" class="btn btn-info">Liste des utilisateurs</a>
+                {% endif %}
+
+                {% if app.user %}
                     <a href="{{ path('app_logout') }}" class="pull-right btn btn-danger">Se déconnecter</a>
                 {% endif %}
 
