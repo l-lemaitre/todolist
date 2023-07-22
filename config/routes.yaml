@@ -7,7 +7,7 @@ controllers:
 app_homepage:
     path: /
     controller: App\Controller\DefaultController::indexAction
-    methods: GET
+    methods: [GET]
 
 app_login:
     path: /login
@@ -24,7 +24,47 @@ app_logout:
     controller: App\Controller\SecurityController::logoutCheck
     methods: [GET]
 
+app_user_list:
+    path: /users
+    controller: App\Controller\UserController::listAction
+    methods: [GET]
+
 app_user_create:
     path: /users/create
     controller: App\Controller\UserController::createAction
     methods: [GET, POST]
+
+app_user_edit:
+    path: /users/{id}/edit
+    controller: App\Controller\UserController::editAction
+    methods: [GET, POST]
+
+app_user_delete:
+    path: /users/{id}/delete
+    controller: App\Controller\UserController::deleteAction
+    methods: [GET]
+
+app_task_list:
+    path: /tasks
+    controller: App\Controller\TaskController::listAction
+    methods: [GET]
+
+app_task_create:
+    path: /tasks/create
+    controller: App\Controller\TaskController::createAction
+    methods: [GET, POST]
+
+app_task_edit:
+    path: /tasks/{id}/edit
+    controller: App\Controller\TaskController::editAction
+    methods: [GET, POST]
+
+app_task_toggle:
+    path: /tasks/{id}/toggle
+    controller: App\Controller\TaskController::toggleAction
+    methods: [GET]
+
+app_task_delete:
+    path: /tasks/{id}/delete
+    controller: App\Controller\TaskController::deleteAction
+    methods: [GET]

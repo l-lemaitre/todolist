@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class SecurityController extends AbstractController
 {
-    #[Route('/login', name: 'app_login')]
+    #[Route('/login', name: 'app_login', methods: ['GET', 'POST'])]
     public function loginAction(AuthenticationUtils $authenticationUtils): Response
     {
         $error = $authenticationUtils->getLastAuthenticationError();
@@ -21,13 +21,13 @@ class SecurityController extends AbstractController
         ));
     }
 
-    #[Route('/login_check', name: 'app_login_check')]
+    #[Route('/login_check', name: 'app_login_check', methods: ['POST'])]
     public function loginCheck()
     {
         // This code is never executed.
     }
 
-    #[Route('/logout', name: 'app_logout')]
+    #[Route('/logout', name: 'app_logout', methods: ['GET'])]
     public function logoutCheck()
     {
         // This code is never executed.

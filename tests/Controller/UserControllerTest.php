@@ -3,65 +3,83 @@
 namespace App\Tests\Controller;
 
 use App\Entity\User;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use App\Tests\Service\NeedLogin;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserControllerTest extends WebTestCase
 {
-    use NeedLogin;
+    private ?KernelBrowser $client = null;
 
-    private $client = null;
+    private $entityManager = null;
 
-    private $manager = null;
-
-    private $user = null;
+    private ?User $user = null;
 
     public function setUp(): void
     {
-        self::bootKernel();
+        $this->client = static::createClient();
 
         $this->truncateEntities([
             User::class
         ]);
 
-        $this->client = static::createClient();
+        $container = static::getContainer();
+
+        $this->entityManager = $container->get('doctrine')->getManager();
 
         $userData = [
             'username' => 'User',
             'password' => '$2y$13$cx7WfZ3C24BccB0a9PuXCeyNCtPsxbMcCdUXh0ARBXap6HXgMiD.u',
             'email' => 'user@orange.fr'
         ];
-
         $this->user = new User();
         $this->user->setUsername($userData['username']);
         $this->user->setPassword($userData['password']);
         $this->user->setEmail($userData['email']);
-
-        $this->manager = $this->client->getContainer()->get('doctrine.orm.entity_manager');
-        $this->manager->persist($this->user);
-        $this->manager->flush();
+        $this->entityManager->persist($this->user);
+        $this->entityManager->flush();
     }
 
     public function testListAction()
     {
+        $this->client->loginUser($this->user);
+
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_list'));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_list'));
 
-        $response = new Response();
+        $this->assertResponseIsSuccessful();
 
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $this->assertSelectorTextContains('h1', 'Liste des utilisateurs');
 
-        $this->assertContains('Liste des utilisateurs', $this->client->getResponse()->getContent());
+        $countUsers = $this->getCountUsers();
+
+        $this->assertCount($countUsers, $crawler->filter('.btn-success'));
+    }
+
+    public function testListActionNotLoggedIn()
+    {
+        $urlGenerator = $this->client->getContainer()->get('router');
+
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_list'));
+
+        $this->client->followRedirect();
+
+        $this->assertResponseIsSuccessful();
+
+        $this->assertStringNotContainsString('Liste des utilisateurs', $this->client->getResponse()->getContent());
+
+        $countUsers = $this->getCountUsers();
+
+        $this->assertNotCount($countUsers, $crawler->filter('.btn-success'));
     }
 
     public function testCreateAction()
     {
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_create'));
 
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
@@ -76,17 +94,13 @@ class UserControllerTest extends WebTestCase
 
         $formValues = $form->getValues();
 
-        $this->client->followRedirect();
+        $this->client->followRedirects();
 
-        $response = new Response();
+        $this->assertResponseRedirects();
 
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $user = $this->entityManager->getRepository(User::class)->find(2);
 
-        $this->assertContains('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
-
-        $user = $this->manager->getRepository('AppBundle:User')->find(2);
-
-        $passwordVerification = $this->client->getContainer()->get('security.password_encoder')->isPasswordValid($user, $formValues['user[password][first]'], $user->getSalt());
+        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
 
         $this->assertEquals($formValues['user[username]'], $user->getUsername());
         $this->assertTrue($passwordVerification);
@@ -99,7 +113,7 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_create'));
 
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
@@ -112,13 +126,9 @@ class UserControllerTest extends WebTestCase
 
         $this->client->submit($form);
 
-        $formValues = $form->getValues();
+        $this->assertResponseIsSuccessful();
 
-        $response = new Response();
-
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-
-        $this->assertNotContains('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
 
         $countUsersAfterTest = $this->getCountUsers();
 
@@ -131,7 +141,7 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_create'));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_create'));
 
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
@@ -144,13 +154,9 @@ class UserControllerTest extends WebTestCase
 
         $this->client->submit($form);
 
-        $formValues = $form->getValues();
+        $this->assertResponseIsSuccessful();
 
-        $response = new Response();
-
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
-
-        $this->assertNotContains('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
 
         $countUsersAfterTest = $this->getCountUsers();
 
@@ -159,17 +165,19 @@ class UserControllerTest extends WebTestCase
 
     public function testEditAction()
     {
+        $this->client->loginUser($this->user);
+
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
         $form = $buttonCrawlerNode->form([
-            'user[username]' => 'Ludovic Edit',
+            'user[username]' => 'User Edit',
             'user[password][first]' => 'motdepasseedit',
             'user[password][second]' => 'motdepasseedit',
-            'user[email]' => 'ludoviclemaitreedit@orange.fr'
+            'user[email]' => 'useredit@orange.fr'
         ]);
 
         $this->client->submit($form);
@@ -178,15 +186,13 @@ class UserControllerTest extends WebTestCase
 
         $this->client->followRedirect();
 
-        $response = new Response();
+        $this->assertResponseIsSuccessful();
 
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $this->assertStringContainsString('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
 
-        $this->assertContains('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
+        $user = $this->entityManager->getRepository(User::class)->find($this->user->getId());
 
-        $user = $this->manager->getRepository('AppBundle:User')->find(1);
-
-        $passwordVerification = $this->client->getContainer()->get('security.password_encoder')->isPasswordValid($user, $formValues['user[password][first]'], $user->getSalt());
+        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
 
         $this->assertEquals($formValues['user[username]'], $user->getUsername());
         $this->assertTrue($passwordVerification);
@@ -195,9 +201,11 @@ class UserControllerTest extends WebTestCase
 
     public function testEditActionBlank()
     {
+        $this->client->loginUser($this->user);
+
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -212,15 +220,13 @@ class UserControllerTest extends WebTestCase
 
         $formValues = $form->getValues();
 
-        $response = new Response();
+        $this->assertResponseIsSuccessful();
 
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
 
-        $this->assertNotContains('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
+        $user = $this->entityManager->getRepository(User::class)->find($this->user->getId());
 
-        $user = $this->manager->getRepository('AppBundle:User')->find(1);
-
-        $passwordVerification = $this->client->getContainer()->get('security.password_encoder')->isPasswordValid($user, $formValues['user[password][first]'], $user->getSalt());
+        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
 
         $this->assertNotEmpty($user->getUsername());
         $this->assertFalse($passwordVerification);
@@ -229,9 +235,11 @@ class UserControllerTest extends WebTestCase
 
     public function testEditActionBeyondMaxFields()
     {
+        $this->client->loginUser($this->user);
+
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('user_edit', ['id' => 1]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -246,35 +254,64 @@ class UserControllerTest extends WebTestCase
 
         $formValues = $form->getValues();
 
-        $response = new Response();
+        $this->assertResponseIsSuccessful();
 
-        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
 
-        $this->assertNotContains('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
+        $user = $this->entityManager->getRepository(User::class)->find($this->user->getId());
 
-        $user = $this->manager->getRepository('AppBundle:User')->find(1);
-
-        $passwordVerification = $this->client->getContainer()->get('security.password_encoder')->isPasswordValid($user, $formValues['user[password][first]'], $user->getSalt());
+        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
 
         $this->assertNotEquals($formValues['user[username]'], $user->getUsername());
         $this->assertFalse($passwordVerification);
         $this->assertNotEquals($formValues['user[email]'], $user->getEmail());
     }
 
+    public function testDeleteUserAction()
+    {
+        $userData = [
+            'username' => 'User2',
+            'password' => 'motdepasse',
+            'email' => 'user2@orange.fr'
+        ];
+        $user = new User();
+        $user->setUsername($userData['username']);
+        $user->setPassword($userData['password']);
+        $user->setEmail($userData['email']);
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        $this->client->loginUser($this->user);
+
+        $urlGenerator = $this->client->getContainer()->get('router');
+
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_delete', ['id' => $user->getId()]));
+
+        $this->client->followRedirect();
+
+        $this->assertResponseIsSuccessful();
+
+        $this->assertStringContainsString('L&#039;utilisateur a bien été supprimé.', $this->client->getResponse()->getContent());
+
+        $userRemoved = $this->entityManager->getRepository(User::class)->find(2);
+
+        $this->assertNull($userRemoved);
+    }
+
     public function getCountUsers()
     {
-        $queryBuilder = $this->manager->createQueryBuilder();
+        $queryBuilder = $this->entityManager->createQueryBuilder();
         $queryBuilder->select('count(user.id)');
-        $queryBuilder->from('AppBundle:User','user');
+        $queryBuilder->from(User::class,'user');
 
         return $queryBuilder->getQuery()->getSingleScalarResult();
     }
 
     private function getEntityManager()
     {
-        return self::$kernel->getContainer()
-            ->get('doctrine')
-            ->getManager();
+        $container = static::getContainer();
+
+        return $container->get('doctrine')->getManager();
     }
 
     private function truncateEntities(array $entities): void
@@ -297,8 +334,13 @@ class UserControllerTest extends WebTestCase
 
     public function tearDown(): void
     {
-        $userEntity = $this->manager->merge($this->user);
-        $this->manager->remove($userEntity);
-        $this->manager->flush();
+        parent::tearDown();
+
+        $userEntity = $this->entityManager->merge($this->user);
+        $this->entityManager->remove($userEntity);
+        $this->entityManager->flush();
+
+        $this->entityManager->close();
+        $this->entityManager = null;
     }
 }

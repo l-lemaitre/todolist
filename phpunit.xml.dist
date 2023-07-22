@@ -15,7 +15,7 @@
     <ini name="error_reporting" value="-1"/>
     <server name="KERNEL_DIR" value="app/"/>
     <server name="KERNEL_CLASS" value="App\Kernel" />
-    <server name="DATABASE_URL" value="mysql://nerofaust:hatsune55@host.docker.internal:3306/todolist?serverVersion=8&amp;charset=utf8mb4" />
+    <server name="DATABASE_URL" value="mysql://root:@127.0.0.1:3306/todolist?serverVersion=8&amp;charset=utf8mb4" />
   </php>
   <testsuites>
     <testsuite name="Project Test Suite">

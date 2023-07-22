@@ -14,7 +14,7 @@
         <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
 
         <!-- Custom CSS -->
-        <link href="{{ asset('css/shop-homepage.css') }}" rel="stylesheet">
+        <link href="{{ asset('css/stylesheet.css') }}" rel="stylesheet">
 
         <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -28,7 +28,7 @@
         <nav class="navbar navbar-light navbar-fixed-top" style="background-color: #e3f2fd;" role="navigation">
             <div class="container">
                 <div class="navbar-header">
-                    <a class="navbar-brand" href="#">To Do List app</a>
+                    <a class="navbar-brand" href="{{ path('app_homepage') }}">To Do List app</a>
 
                     <img src="{{ asset('img/Logo_OpenClassrooms.png') }}" alt="OpenClassrooms" />
                 </div>
@@ -41,30 +41,36 @@
                 <a href="{{ path('app_user_create') }}" class="btn btn-primary">Créer un utilisateur</a>
 
                 {% if app.user %}
-                <a href="{{ path('app_logout') }}" class="pull-right btn btn-danger">Se déconnecter</a>
+                    <a href="{{ path('app_user_list') }}" class="btn btn-info">Liste des utilisateurs</a>
+                {% endif %}
+
+                {% if app.user %}
+                    <a href="{{ path('app_logout') }}" class="pull-right btn btn-danger">Se déconnecter</a>
                 {% endif %}
 
                 {% if not app.user and 'login' != app.request.attributes.get('_route') %}
-                <a href="{{ path('app_login') }}" class="btn btn-success">Se connecter</a>
+                    <a href="{{ path('app_login') }}" class="btn btn-success">Se connecter</a>
                 {% endif %}
             </div>
 
             <div class="row">
                 <div class="col-md-12">
                     {% for flash_message in app.session.flashBag.get('success') %}
+                        <br />
                         <div class="alert alert-success" role="alert">
                             <strong>Superbe !</strong> {{ flash_message }}
                         </div>
                     {% endfor %}
 
                     {% for flash_message in app.session.flashBag.get('error') %}
+                        <br />
                         <div class="alert alert-danger" role="alert">
                             <strong>Oops !</strong> {{ flash_message }}
                         </div>
                     {% endfor %}
 
                     {% block header_title %}{% endblock %}
-                    {% block header_img %}<img class="slide-image" src="{{ asset('img/todolist_homepage.jpg') }}" alt="todo list">{% endblock %}
+                    {% block header_img %}<br /><img class="slide-image" src="{{ asset('img/todolist_homepage.jpg') }}" alt="todo list">{% endblock %}
                 </div>
             </div>
 
