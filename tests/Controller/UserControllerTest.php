@@ -3,6 +3,9 @@
 namespace App\Tests\Controller;
 
 use App\Entity\User;
+use Doctrine\ORM\EntityManager;
+use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
+use Liip\TestFixturesBundle\Services\DatabaseTools\AbstractDatabaseTool;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,7 +15,9 @@ class UserControllerTest extends WebTestCase
 {
     private ?KernelBrowser $client = null;
 
-    private $entityManager = null;
+    protected AbstractDatabaseTool $databaseTool;
+
+    private ?EntityManager $entityManager;
 
     private ?User $user = null;
 
@@ -20,25 +25,21 @@ class UserControllerTest extends WebTestCase
     {
         $this->client = static::createClient();
 
-        $this->truncateEntities([
-            User::class
-        ]);
-
         $container = static::getContainer();
 
         $this->entityManager = $container->get('doctrine')->getManager();
 
-        $userData = [
-            'username' => 'User',
-            'password' => '$2y$13$cx7WfZ3C24BccB0a9PuXCeyNCtPsxbMcCdUXh0ARBXap6HXgMiD.u',
-            'email' => 'user@orange.fr'
-        ];
-        $this->user = new User();
-        $this->user->setUsername($userData['username']);
-        $this->user->setPassword($userData['password']);
-        $this->user->setEmail($userData['email']);
-        $this->entityManager->persist($this->user);
-        $this->entityManager->flush();
+        $this->truncateEntities([
+            User::class
+        ]);
+
+        $this->databaseTool = $this->client->getContainer()->get(DatabaseToolCollection::class)->get();
+
+        $this->databaseTool->loadFixtures([
+            'App\DataFixtures\UserFixtures'
+        ]);
+
+        $this->user = $this->entityManager->getRepository(User::class)->find(1);
     }
 
     public function testListAction()
@@ -75,6 +76,25 @@ class UserControllerTest extends WebTestCase
         $this->assertNotCount($countUsers, $crawler->filter('.btn-success'));
     }
 
+    public function testListActionNotAuthorizedUserRoleUser()
+    {
+        $userRoleUSer = $this->entityManager->getRepository(User::class)->find(2);
+
+        $this->client->loginUser($userRoleUSer);
+
+        $urlGenerator = $this->client->getContainer()->get('router');
+
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_list'));
+
+        $this->client->followRedirect();
+
+        $this->assertResponseIsSuccessful();
+
+        $this->assertStringContainsString(
+            'Accès refusé. Vous n&#039;avez pas les droits suffisants pour afficher la liste des utilisateurs.',
+            $this->client->getResponse()->getContent());
+    }
+
     public function testCreateAction()
     {
         $urlGenerator = $this->client->getContainer()->get('router');
@@ -84,10 +104,10 @@ class UserControllerTest extends WebTestCase
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
         $form = $buttonCrawlerNode->form([
-            'user[username]' => 'User2',
+            'user[username]' => 'User3',
             'user[password][first]' => 'motdepasse',
             'user[password][second]' => 'motdepasse',
-            'user[email]' => 'user2@orange.fr'
+            'user[email]' => 'user3@orange.fr'
         ]);
 
         $this->client->submit($form);
@@ -98,7 +118,7 @@ class UserControllerTest extends WebTestCase
 
         $this->assertResponseRedirects();
 
-        $user = $this->entityManager->getRepository(User::class)->find(2);
+        $user = $this->entityManager->getRepository(User::class)->find(3);
 
         $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
 
@@ -161,6 +181,23 @@ class UserControllerTest extends WebTestCase
         $countUsersAfterTest = $this->getCountUsers();
 
         $this->assertEquals($countUsersBeforeTest, $countUsersAfterTest);
+    }
+
+    public function testCreateActionNotAuthorizedUserRoleUser()
+    {
+        $userRoleUSer = $this->entityManager->getRepository(User::class)->find(2);
+
+        $this->client->loginUser($userRoleUSer);
+
+        $urlGenerator = $this->client->getContainer()->get('router');
+
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_create'));
+
+        $this->client->followRedirects();
+
+        $this->assertResponseRedirects();
+
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
     }
 
     public function testEditAction()
@@ -267,25 +304,32 @@ class UserControllerTest extends WebTestCase
         $this->assertNotEquals($formValues['user[email]'], $user->getEmail());
     }
 
-    public function testDeleteUserAction()
+    public function testEditActionNotAuthorizedUserRoleUser()
     {
-        $userData = [
-            'username' => 'User2',
-            'password' => 'motdepasse',
-            'email' => 'user2@orange.fr'
-        ];
-        $user = new User();
-        $user->setUsername($userData['username']);
-        $user->setPassword($userData['password']);
-        $user->setEmail($userData['email']);
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
+        $userRoleUSer = $this->entityManager->getRepository(User::class)->find(2);
 
+        $this->client->loginUser($userRoleUSer);
+
+        $urlGenerator = $this->client->getContainer()->get('router');
+
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
+
+        $this->client->followRedirect();
+
+        $this->assertResponseIsSuccessful();
+
+        $this->assertStringContainsString(
+            'Accès refusé. L&#039;utilisateur ne peut pas être modifié.',
+            $this->client->getResponse()->getContent());
+    }
+
+    public function testDeleteAction()
+    {
         $this->client->loginUser($this->user);
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_delete', ['id' => $user->getId()]));
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_delete', ['id' => 2]));
 
         $this->client->followRedirect();
 
@@ -298,6 +342,29 @@ class UserControllerTest extends WebTestCase
         $this->assertNull($userRemoved);
     }
 
+    public function testDeleteActionNotAuthorizedUserRoleUser()
+    {
+        $userRoleUSer = $this->entityManager->getRepository(User::class)->find(2);
+
+        $this->client->loginUser($userRoleUSer);
+
+        $urlGenerator = $this->client->getContainer()->get('router');
+
+        $this->client->request(Request::METHOD_GET,
+            $urlGenerator->generate('app_user_delete', ['id' => $this->user->getId()]));
+
+        $this->client->followRedirect();
+
+        $this->assertResponseIsSuccessful();
+
+        $this->assertStringContainsString('Accès refusé. L&#039;utilisateur ne peut pas être supprimé.',
+            $this->client->getResponse()->getContent());
+
+        $userRemoved = $this->entityManager->getRepository(User::class)->find($this->user->getId());
+
+        $this->assertNotNull($userRemoved);
+    }
+
     public function getCountUsers()
     {
         $queryBuilder = $this->entityManager->createQueryBuilder();
@@ -307,23 +374,16 @@ class UserControllerTest extends WebTestCase
         return $queryBuilder->getQuery()->getSingleScalarResult();
     }
 
-    private function getEntityManager()
-    {
-        $container = static::getContainer();
-
-        return $container->get('doctrine')->getManager();
-    }
-
     private function truncateEntities(array $entities): void
     {
-        $connection = $this->getEntityManager()->getConnection();
+        $connection = $this->entityManager->getConnection();
         $databasePlatform = $connection->getDatabasePlatform();
         if ($databasePlatform->supportsForeignKeyConstraints()) {
             $connection->query('SET FOREIGN_KEY_CHECKS=0');
         }
         foreach ($entities as $entity) {
             $query = $databasePlatform->getTruncateTableSQL(
-                $this->getEntityManager()->getClassMetadata($entity)->getTableName()
+                $this->entityManager->getClassMetadata($entity)->getTableName()
             );
             $connection->executeUpdate($query);
         }

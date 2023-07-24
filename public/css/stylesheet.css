@@ -4,9 +4,26 @@
  * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap/blob/gh-pages/LICENSE)
  */
 
+/* BASE */
+.margin-buttons a {
+    margin: 0.5rem;
+}
+
 /* HOMEPAGE */
 body {
     padding-top: 70px; /* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
+}
+
+.fix-btn-secondary {
+    color: #fff;
+    background-color: #5c636a;
+    border-color: #565e64;
+}
+
+.fix-btn-secondary:hover {
+    color: #fff;
+    background-color: #565e64;
+    border-color: #51585e;
 }
 
 .slide-image {
@@ -55,10 +72,6 @@ footer {
 }
 
 /* TASK LIST */
-.create-task-btn {
-    padding-bottom: 3.5rem;
-}
-
 .thumbnail {
     margin-top: 2rem;
 }

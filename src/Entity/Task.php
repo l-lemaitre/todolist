@@ -2,47 +2,39 @@
 
 namespace App\Entity;
 
+use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * @ORM\Entity
- * @ORM\Table
- */
+#[ORM\Entity]
 class Task
 {
-    /**
-     * @ORM\Column(type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="datetime")
-     */
-    private $createdAt;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private ?\DateTimeInterface $createdAt = null;
 
-    /**
-     * @ORM\Column(type="string")
-     * @Assert\NotBlank(message="Vous devez saisir un titre.")
-     */
-    private $title;
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Vous devez saisir un titre.")]
+    private ?string $title = null;
 
-    /**
-     * @ORM\Column(type="text")
-     * @Assert\NotBlank(message="Vous devez saisir du contenu.")
-     */
-    private $content;
+    #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: "Vous devez saisir un titre.")]
+    private ?string $content = null;
 
-    /**
-     * @ORM\Column(type="boolean")
-     */
-    private $isDone;
+    #[ORM\Column(type: Types::SMALLINT)]
+    private ?int $isDone;
+
+    #[ORM\ManyToOne(inversedBy: 'tasks')]
+    private ?User $user = null;
 
     public function __construct()
     {
-        $this->createdAt = new \Datetime();
+        $this->createdAt = new DateTimeImmutable();
         $this->isDone = false;
     }
 
@@ -81,11 +73,6 @@ class Task
         $this->content = $content;
     }
 
-    public function isDone()
-    {
-        return $this->isDone;
-    }
-
     public function toggle($flag)
     {
         $this->isDone = $flag;
@@ -113,5 +100,17 @@ class Task
     public function getIsDone()
     {
         return $this->isDone;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+
+        return $this;
     }
 }

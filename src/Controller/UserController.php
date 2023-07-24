@@ -10,29 +10,42 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class UserController extends AbstractController
 {
+    private ManagerRegistry $doctrine;
+
     private UserService $userService;
 
-    public function __construct(UserService $userService)
+    public function __construct(ManagerRegistry $doctrine, UserService $userService)
     {
+        $this->doctrine = $doctrine;
+
         $this->userService = $userService;
     }
 
     #[Route('/users', name: 'app_user_list', methods: ['GET'])]
-    public function listAction(ManagerRegistry $doctrine): Response
+    #[IsGranted('ROLE_ADMIN')]
+    public function listAction(): Response
     {
-        return $this->render('user/list.html.twig', ['users' => $doctrine->getRepository(User::class)->findAll()]);
+        return $this->render('user/list.html.twig', ['users' => $this->doctrine->getRepository(User::class)->findAll()]);
     }
 
     #[Route('/users/create', name: 'app_user_create', methods: ['GET', 'POST'])]
     public function createAction(Request $request): RedirectResponse|Response
     {
-        $user = new User();
-        $form = $this->createForm(UserType::class, $user);
+        $userConnected = $this->getUser();
 
+        if ($userConnected && !$this->isGranted('ROLE_ADMIN')) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $user = new User();
+
+        $form = $this->createForm(UserType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -47,8 +60,16 @@ class UserController extends AbstractController
     }
 
     #[Route('/users/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
-    public function editAction(User $user, Request $request): RedirectResponse|Response
+    public function editAction(Request $request, int $id): RedirectResponse|Response
     {
+        $userConnected = $this->getUser();
+
+        $user = $this->doctrine->getRepository(User::class)->find($id);
+
+        if (!$user || ($user !== $userConnected && !$this->isGranted('ROLE_ADMIN'))) {
+            throw $this->createAccessDeniedException();
+        }
+
         $form = $this->createForm(UserType::class, $user);
 
         $form->handleRequest($request);
@@ -65,12 +86,29 @@ class UserController extends AbstractController
     }
 
     #[Route('/users/{id}/delete', name: 'app_user_delete', methods: ['GET'])]
-    public function deleteAction(User $user): RedirectResponse
+    public function deleteAction(int $id): RedirectResponse
     {
-        $this->userService->deleteUser($user);
+        $userConnected = $this->getUser();
 
-        $this->addFlash('success', 'L\'utilisateur a bien été supprimé.');
+        $user = $this->doctrine->getRepository(User::class)->find($id);
 
-        return $this->redirectToRoute('app_user_list');
+        if (!$user) {
+            throw $this->createAccessDeniedException();
+        } elseif ($user == $userConnected) {
+            $this->userService->deleteUser($user);
+
+            $session = new Session();
+            $session->invalidate();
+
+            return $this->redirectToRoute('app_logout');
+        } elseif ($this->isGranted('ROLE_ADMIN')) {
+            $this->userService->deleteUser($user);
+
+            $this->addFlash('success', 'L\'utilisateur a bien été supprimé.');
+
+            return $this->redirectToRoute('app_user_list');
+        } else {
+            throw $this->createAccessDeniedException();
+        }
     }
 }

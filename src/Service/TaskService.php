@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Task;
+use App\Entity\User;
 use Doctrine\Persistence\ManagerRegistry;
 
 class TaskService
@@ -23,8 +24,10 @@ class TaskService
         return $task;
     }
 
-    public function addTask(Task $task): void
+    public function addTask(Task $task, User $user): void
     {
+        $task->setUser($user);
+
         $this->setTask($task);
     }
 
