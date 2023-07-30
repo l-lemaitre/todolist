@@ -4,13 +4,36 @@
  * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap/blob/gh-pages/LICENSE)
  */
 
+/* BASE */
+.margin-buttons a {
+    margin: 0.5rem;
+}
+
 /* HOMEPAGE */
 body {
     padding-top: 70px; /* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
 }
 
+.fix-btn-secondary {
+    color: #fff;
+    background-color: #5c636a;
+    border-color: #565e64;
+}
+
+.fix-btn-secondary:hover {
+    color: #fff;
+    background-color: #565e64;
+    border-color: #51585e;
+}
+
 .slide-image {
     width: 100%;
+    margin: 20px 0;
+}
+
+.alert {
+    margin-top: 20px;
+    margin-bottom: 5px;
 }
 
 .carousel-holder {
@@ -55,15 +78,27 @@ footer {
 }
 
 /* TASK LIST */
-.create-task-btn {
-    padding-bottom: 3.5rem;
-}
-
 .thumbnail {
-    margin-top: 2rem;
+    margin-top: 20px;
 }
 
 .action-buttons {
     display: flex;
     justify-content: space-around;
+}
+
+.btn-warning {
+    position: relative;
+    top: -0.7rem;
+}
+
+.caption-custom {
+    height: 138px;
+    padding: 9px;
+    overflow: auto;
+    color: #333;
+}
+
+.caption-custom > h4 + div {
+    margin-bottom: 10px;
 }

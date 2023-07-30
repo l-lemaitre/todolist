@@ -4,6 +4,9 @@ namespace App\Tests\Controller;
 
 use App\Entity\User;
 use App\Entity\Task;
+use Doctrine\ORM\EntityManager;
+use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
+use Liip\TestFixturesBundle\Services\DatabaseTools\AbstractDatabaseTool;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,7 +15,9 @@ class TaskControllerTest extends WebTestCase
 {
     private ?KernelBrowser $client = null;
 
-    private $entityManager = null;
+    protected AbstractDatabaseTool $databaseTool;
+
+    private ?EntityManager $entityManager = null;
 
     private ?Task $task = null;
 
@@ -22,36 +27,24 @@ class TaskControllerTest extends WebTestCase
     {
         $this->client = static::createClient();
 
+        $container = static::getContainer();
+
+        $this->entityManager = $container->get('doctrine')->getManager();
+
         $this->truncateEntities([
             User::class,
             Task::class
         ]);
 
-        $container = static::getContainer();
+        $this->databaseTool = $this->client->getContainer()->get(DatabaseToolCollection::class)->get();
 
-        $this->entityManager = $container->get('doctrine')->getManager();
+        $this->databaseTool->loadFixtures([
+            'App\DataFixtures\UserFixtures',
+            'App\DataFixtures\TaskFixtures'
+        ]);
 
-        $userData = [
-            'username' => 'User',
-            'password' => '$2y$13$cx7WfZ3C24BccB0a9PuXCeyNCtPsxbMcCdUXh0ARBXap6HXgMiD.u',
-            'email' => 'user@orange.fr'
-        ];
-        $this->user = new User();
-        $this->user->setUsername($userData['username']);
-        $this->user->setPassword($userData['password']);
-        $this->user->setEmail($userData['email']);
-        $this->entityManager->persist($this->user);
-
-        $taskData = [
-            'title' => 'Test',
-            'content' => 'Test.'
-        ];
-        $this->task = new Task();
-        $this->task->setTitle($taskData['title']);
-        $this->task->setContent($taskData['content']);
-        $this->entityManager->persist($this->task);
-
-        $this->entityManager->flush();
+        $this->user = $this->entityManager->getRepository(User::class)->find(1);
+        $this->task = $this->entityManager->getRepository(Task::class)->find(1);
     }
 
     public function testListAction()
@@ -99,7 +92,7 @@ class TaskControllerTest extends WebTestCase
         $buttonCrawlerNode = $crawler->selectButton('Ajouter');
 
         $form = $buttonCrawlerNode->form([
-            'task[title]' => 'Courses',
+            'task[title]' => 'Lieu des courses',
             'task[content]' => 'Aller au supermarché.'
         ]);
 
@@ -111,7 +104,8 @@ class TaskControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringContainsString('La tâche a bien été ajoutée.', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString('La tâche a bien été ajoutée.',
+            $this->client->getResponse()->getContent());
 
         $task = $this->entityManager->getRepository(Task::class)->find(2);
 
@@ -140,7 +134,8 @@ class TaskControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringNotContainsString('La tâche a bien été ajoutée.', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('La tâche a bien été ajoutée.',
+            $this->client->getResponse()->getContent());
 
         $countTasksAfterTest = $this->getCountTasks();
 
@@ -153,13 +148,14 @@ class TaskControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_edit', ['id' => $this->task->getId()]));
+        $crawler = $this->client->request(Request::METHOD_GET,
+            $urlGenerator->generate('app_task_edit', ['id' => $this->task->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
         $form = $buttonCrawlerNode->form([
-            'task[title]' => 'Test edit',
-            'task[content]' => 'Test edit.'
+            'task[title]' => 'Lieu des courses 2',
+            'task[content]' => 'Aller au supermarché. 2'
         ]);
 
         $this->client->submit($form);
@@ -170,7 +166,8 @@ class TaskControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringContainsString('La tâche a bien été modifiée.', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString('La tâche a été modifiée avec succès.',
+            $this->client->getResponse()->getContent());
 
         $task = $this->entityManager->getRepository(Task::class)->find($this->task->getId());
 
@@ -184,7 +181,8 @@ class TaskControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_edit', ['id' => $this->task->getId()]));
+        $crawler = $this->client->request(Request::METHOD_GET,
+            $urlGenerator->generate('app_task_edit', ['id' => $this->task->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -197,7 +195,8 @@ class TaskControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringNotContainsString('La tâche a bien été modifiée.', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('La tâche a bien été modifiée.',
+            $this->client->getResponse()->getContent());
 
         $task = $this->entityManager->getRepository(Task::class)->find($this->task->getId());
 
@@ -205,42 +204,93 @@ class TaskControllerTest extends WebTestCase
         $this->assertNotEmpty($task->getContent());
     }
 
-    public function testToggleTaskAction()
+    public function testToggleAction()
     {
         $this->client->loginUser($this->user);
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_toggle', ['id' => $this->task->getId()]));
-
-        $task = $this->entityManager->getRepository(Task::class)->find($this->task->getId());
+        $this->client->request(Request::METHOD_GET,
+            $urlGenerator->generate('app_task_toggle', ['id' => $this->task->getId()]));
 
         $this->client->followRedirect();
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringContainsString('La tâche ' . $task->getTitle() . ' a bien été marquée comme terminée.', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString(
+            'La tâche ' . $this->task->getTitle() . ' a bien été indiquée comme terminée.',
+            $this->client->getResponse()->getContent());
 
-        $this->assertTrue($task->getIsDone());
+        $this->assertTrue($this->task->getIsDone() == 1);
     }
 
-    public function testDeleteTaskAction()
+    public function testDeleteAction()
     {
         $this->client->loginUser($this->user);
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_delete', ['id' => $this->task->getId()]));
-
-        $this->client->followRedirect();
-
-        $this->assertResponseIsSuccessful();
-
-        $this->assertStringContainsString('La tâche a bien été supprimée.', $this->client->getResponse()->getContent());
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_delete',
+            ['id' => $this->task->getId()]));
 
         $task = $this->entityManager->getRepository(Task::class)->find(1);
 
         $this->assertNull($task);
+    }
+
+    public function testDeleteActionNotAuthorized()
+    {
+        $this->client->loginUser($this->user);
+
+        $urlGenerator = $this->client->getContainer()->get('router');
+
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_delete', ['id' => 2]));
+
+        $this->client->followRedirect();
+
+        $this->assertResponseIsSuccessful();
+
+        $this->assertStringContainsString('Accès refusé. La tâche ne peut pas être supprimée.',
+            $this->client->getResponse()->getContent());
+
+        $task = $this->entityManager->getRepository(Task::class)->find(2);
+
+        $this->assertNotNull($task);
+    }
+
+    public function testDeleteActionAnonymousUserRoleAdmin()
+    {
+        $this->client->loginUser($this->user);
+
+        $urlGenerator = $this->client->getContainer()->get('router');
+
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_delete', ['id' => 3]));
+
+        $task = $this->entityManager->getRepository(Task::class)->find(3);
+
+        $this->assertNull($task);
+    }
+
+    public function testDeleteActionAnonymousNotAuthorizedUserRoleUser()
+    {
+        $userRoleUSer = $this->entityManager->getRepository(User::class)->find(2);
+
+        $this->client->loginUser($userRoleUSer);
+
+        $urlGenerator = $this->client->getContainer()->get('router');
+
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_task_delete', ['id' => 3]));
+
+        $this->client->followRedirect();
+
+        $this->assertResponseIsSuccessful();
+
+        $this->assertStringContainsString('Accès refusé. La tâche ne peut pas être supprimée.',
+            $this->client->getResponse()->getContent());
+
+        $task = $this->entityManager->getRepository(Task::class)->find(3);
+
+        $this->assertNotNull($task);
     }
 
     public function getCountTasks()
@@ -252,23 +302,16 @@ class TaskControllerTest extends WebTestCase
         return $queryBuilder->getQuery()->getSingleScalarResult();
     }
 
-    private function getEntityManager()
-    {
-        $container = static::getContainer();
-
-        return $container->get('doctrine')->getManager();
-    }
-
     private function truncateEntities(array $entities): void
     {
-        $connection = $this->getEntityManager()->getConnection();
+        $connection = $this->entityManager->getConnection();
         $databasePlatform = $connection->getDatabasePlatform();
         if ($databasePlatform->supportsForeignKeyConstraints()) {
             $connection->query('SET FOREIGN_KEY_CHECKS=0');
         }
         foreach ($entities as $entity) {
             $query = $databasePlatform->getTruncateTableSQL(
-                $this->getEntityManager()->getClassMetadata($entity)->getTableName()
+                $this->entityManager->getClassMetadata($entity)->getTableName()
             );
             $connection->executeUpdate($query);
         }
@@ -283,10 +326,6 @@ class TaskControllerTest extends WebTestCase
 
         $userEntity = $this->entityManager->merge($this->user);
         $this->entityManager->remove($userEntity);
-        $this->entityManager->flush();
-
-        $taskEntity = $this->entityManager->merge($this->task);
-        $this->entityManager->remove($taskEntity);
         $this->entityManager->flush();
 
         $this->entityManager->close();

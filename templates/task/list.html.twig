@@ -1,37 +1,53 @@
 {% extends 'base.html.twig' %}
 
-{% block header_img %}<br /><img class="slide-image" src="{{ asset('img/todolist_content.jpg') }}" alt="todo list">{% endblock %}
+{% block header_img %}<img class="slide-image" src="{{ asset('img/todolist_content.jpg') }}" alt="todo list">{% endblock %}
 
 {% block body %}
-    <div class="create-task-btn">
-        <a href="{{ path('app_task_create') }}" class="btn btn-info pull-right">Créer une tâche</a>
+    <div class="row margin-buttons">
+        {% if path(app.request.attributes.get('_route')) == '/tasks/current' %}
+            <a href="{{ path('app_task_done_list') }}" class="btn fix-btn-secondary">Liste des tâches terminées</a>
+        <a href="{{ path('app_task_list') }}" class="btn btn-info">Liste des tâches</a>
+        {% elseif path(app.request.attributes.get('_route')) == '/tasks/done' %}
+            <a href="{{ path('app_task_current_list') }}" class="btn btn-primary">Liste des tâches en cours</a>
+            <a href="{{ path('app_task_list') }}" class="btn btn-info">Liste des tâches</a>
+        {% else %}
+            <a href="{{ path('app_task_current_list') }}" class="btn btn-primary">Liste des tâches en cours</a>
+            <a href="{{ path('app_task_done_list') }}" class="btn fix-btn-secondary">Liste des tâches terminées</a>
+        {% endif %}
+        <a href="{{ path('app_task_create') }}" class="btn btn-success pull-right">Créer une tâche</a>
     </div>
     <div class="row">
         {% for task in tasks %}
-        <div class="col-sm-4 col-lg-4 col-md-4">
-            <div class="thumbnail">
-                <div class="caption">
-                    <h4 class="pull-right">
-                        {% if task.isDone %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
-                    </h4>
-                    <h4><a href="{{ path('app_task_edit', {'id' : task.id }) }}">{{ task.title }}</a></h4>
-                    <p>{{ task.content }}</p>
+            <div class="col-sm-4 col-lg-4 col-md-4">
+                <div class="thumbnail">
+                    <div class="caption-custom">
+                        <h4 class="pull-right">
+                            {% if task.getIsDone %}<span class="glyphicon glyphicon-ok"></span>{% else %}<span class="glyphicon glyphicon-remove"></span>{% endif %}
+                        </h4>
+                        <h4><a href="{{ path('app_task_edit', {'id' : task.id }) }}">{{ task.title }}</a></h4>
+                        <div>
+                            <div>Auteur : {% if task.getUser %}{{ task.getUser.getUsername }}{% else %}Anonyme{% endif %}</div>
+                            <div>Date de Création : {{ task.getCreatedAt|date('d/m/Y') }}</div>
+                        </div>
+                        <p>{{ task.content }}</p>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <form action="{{ path('app_task_toggle', {'id' : task.id }) }}">
+                        <button class="btn btn-success btn-sm">
+                            {% if not task.getIsDone %}Terminée{% else %}Non terminée{% endif %}
+                        </button>
+                    </form>
+                    <form action="{{ path('app_task_edit', {'id' : task.id }) }}">
+                        <button class="btn btn-secondary btn-sm">Modifier</button>
+                    </form>
+                    {% if (task.getUser and userId == task.getUser.getId) or (not task.getUser and is_granted('ROLE_ADMIN')) %}
+                        <form action="{{ path('app_task_delete', {'id' : task.id }) }}">
+                            <button class="btn btn-danger btn-sm">Supprimer</button>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
-            <div class="action-buttons">
-                <form action="{{ path('app_task_toggle', {'id' : task.id }) }}">
-                    <button class="btn btn-success btn-sm">
-                        {% if not task.isDone %}Marquer comme faite{% else %}Marquer non terminée{% endif %}
-                    </button>
-                </form>
-                <form action="{{ path('app_task_edit', {'id' : task.id }) }}">
-                    <button class="btn btn-secondary btn-sm">Modifier</button>
-                </form>
-                <form action="{{ path('app_task_delete', {'id' : task.id }) }}">
-                    <button class="btn btn-danger btn-sm">Supprimer</button>
-                </form>
-            </div>
-        </div>
         {% else %}
             <div class="alert alert-warning" role="alert">
                 Il n'y a pas encore de tâche enregistrée. <a href="{{ path('app_task_create') }}" class="btn btn-warning pull-right">Créer une tâche</a>

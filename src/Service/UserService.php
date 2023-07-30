@@ -10,22 +10,20 @@ class UserService
 {
     private ManagerRegistry $doctrine;
 
-    private UserPasswordHasherInterface $userPasswordHasher;
+    private UserPasswordHasherInterface $userPasswordHash;
 
-    public function __construct(ManagerRegistry $doctrine, UserPasswordHasherInterface $userPasswordHasher)
+    public function __construct(ManagerRegistry $doctrine, UserPasswordHasherInterface $userPasswordHash)
     {
         $this->doctrine = $doctrine;
 
-        $this->userPasswordHasher = $userPasswordHasher;
+        $this->userPasswordHash = $userPasswordHash;
     }
 
-    private function setUser(User $user): User
+    private function setUser(User $user): void
     {
-        //$user->setRoles(['ROLE_USER']);
-
         if (trim($user->getPassword())) {
             $user->setPassword(
-                $this->userPasswordHasher->hashPassword(
+                $this->userPasswordHash->hashPassword(
                     $user,
                     $user->getPassword()
                 )
@@ -35,8 +33,6 @@ class UserService
         $entityManager = $this->doctrine->getManager();
         $entityManager->persist($user);
         $entityManager->flush();
-
-        return $user;
     }
 
     public function addUser(User $user): void

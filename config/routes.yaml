@@ -4,6 +4,16 @@ controllers:
         namespace: App\Controller
     type: attribute
 
+Security:
+    resource:
+        path: ../src/Security/
+        namespace: App\Security
+    type: attribute
+
+kernel:
+    resource: App\Kernel
+    type: attribute
+
 app_homepage:
     path: /
     controller: App\Controller\DefaultController::indexAction
@@ -46,6 +56,16 @@ app_user_delete:
 
 app_task_list:
     path: /tasks
+    controller: App\Controller\TaskController::listAction
+    methods: [GET]
+
+app_task_current_list:
+    path: /tasks/current
+    controller: App\Controller\TaskController::listAction
+    methods: [GET]
+
+app_task_done_list:
+    path: /tasks/done
     controller: App\Controller\TaskController::listAction
     methods: [GET]
 

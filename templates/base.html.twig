@@ -1,29 +1,19 @@
 <!DOCTYPE html>
 <html lang="fr">
-
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="description" content="">
         <meta name="author" content="">
-
         <title>To Do List app</title>
-
+        <!-- Main CSS theme -->
+        {% block stylesheets %}{{ encore_entry_link_tags('app') }}{% endblock %}
         <!-- Bootstrap Core CSS -->
         <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
-
         <!-- Custom CSS -->
         <link href="{{ asset('css/stylesheet.css') }}" rel="stylesheet">
-
-        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-        <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-        <![endif]-->
     </head>
-
     <body>
         <nav class="navbar navbar-light navbar-fixed-top" style="background-color: #e3f2fd;" role="navigation">
             <div class="container">
@@ -34,48 +24,40 @@
                 </div>
             </div>
         </nav>
-
         <!-- Page Content -->
         <div class="container">
-            <div class="row">
-                <a href="{{ path('app_user_create') }}" class="btn btn-primary">Créer un utilisateur</a>
-
-                {% if app.user %}
+            <div class="row margin-buttons">
+                {% if (not app.user and 'app_user_create' != app.request.attributes.get('_route')) or is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_user_create') }}" class="btn btn-success">Créer un utilisateur</a>
+                {% elseif is_granted('ROLE_USER') %}
+                    <a href="{{ path('app_user_edit', {'id' : app.user.id}) }}" class="btn btn-primary">Mon compte</a>
+                {% endif %}
+                {% if is_granted('ROLE_ADMIN') %}
                     <a href="{{ path('app_user_list') }}" class="btn btn-info">Liste des utilisateurs</a>
                 {% endif %}
-
                 {% if app.user %}
                     <a href="{{ path('app_logout') }}" class="pull-right btn btn-danger">Se déconnecter</a>
                 {% endif %}
-
-                {% if not app.user and 'login' != app.request.attributes.get('_route') %}
+                {% if not app.user and 'app_login' != app.request.attributes.get('_route') %}
                     <a href="{{ path('app_login') }}" class="btn btn-success">Se connecter</a>
                 {% endif %}
             </div>
-
             <div class="row">
                 <div class="col-md-12">
                     {% for flash_message in app.session.flashBag.get('success') %}
-                        <br />
                         <div class="alert alert-success" role="alert">
                             <strong>Superbe !</strong> {{ flash_message }}
                         </div>
                     {% endfor %}
-
                     {% for flash_message in app.session.flashBag.get('error') %}
-                        <br />
                         <div class="alert alert-danger" role="alert">
                             <strong>Oops !</strong> {{ flash_message }}
                         </div>
                     {% endfor %}
-
                     {% block header_title %}{% endblock %}
-                    {% block header_img %}<br /><img class="slide-image" src="{{ asset('img/todolist_homepage.jpg') }}" alt="todo list">{% endblock %}
+                    {% block header_img %}<img class="slide-image" src="{{ asset('img/todolist_homepage.jpg') }}" alt="todo list">{% endblock %}
                 </div>
             </div>
-
-            <br />
-
             <div class="row">
                 <div class="col-md-12">
                     {% block body %}{% endblock %}
@@ -83,9 +65,7 @@
             </div>
         </div>
         <!-- /.container -->
-
         <div class="container">
-
             <hr>
             <footer>
                 <div class="row">
@@ -94,10 +74,8 @@
                     </div>
                 </div>
             </footer>
-
         </div>
-
-        {# <script src="{{ asset('js/jquery.js') }}"></script> #}
+        <!-- Bootstrap JS -->
         <script src="{{ asset('js/bootstrap.min.js') }}"></script>
     </body>
 </html>

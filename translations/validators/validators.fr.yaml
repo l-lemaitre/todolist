@@ -1,0 +1,10 @@
+You have to accept our terms of service.: Vous devez accepter nos conditions d'utilisation.
+There is already an account with this username.: Il existe déjà un compte avec ce nom d'utilisateur.
+This value is already in use.: Cette valeur est déjà utilisée.
+Please enter your username.: Veuillez entrer votre nom d'utilisateur.
+Please enter a password.: Veuillez entrer un mot de passe.
+Your password must be at least {{ limit }} characters long.: Votre mot de passe doit comporter au moins {{ limit }} caractères.
+Password fields must match.: Les champs de mot de passe doivent correspondre.
+Please upload a valid image file.: Veuillez uploader un fichier image valide.
+This video already exists for this figure.: Cette vidéo existe déjà pour cette figure.
+The Password is invalid. It must contain at least 8 alphanumeric characters and contain no accents or special characters except "-" or "_".: Le Mot de passe n'est pas valide. Il doit contenir 8 caractères alphanumériques au minimum et ne comporter aucun accent ni caractères spéciaux hormis "-" ou "_".
