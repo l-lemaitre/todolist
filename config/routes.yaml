@@ -59,8 +59,13 @@ app_task_list:
     controller: App\Controller\TaskController::listAction
     methods: [GET]
 
-app_task_completed_list:
-    path: /tasks/completed
+app_task_current_list:
+    path: /tasks/current
+    controller: App\Controller\TaskController::listAction
+    methods: [GET]
+
+app_task_done_list:
+    path: /tasks/done
     controller: App\Controller\TaskController::listAction
     methods: [GET]
 

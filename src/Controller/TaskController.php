@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Task;
 use App\Form\TaskType;
 use App\Service\TaskService;
+use App\Repository\TaskRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,13 +18,17 @@ class TaskController extends AbstractController
 {
     private ManagerRegistry $doctrine;
 
+    private TaskRepository $taskRepository;
+
     private TaskService $taskService;
 
     private TranslatorInterface $translator;
 
-    public function __construct(ManagerRegistry $doctrine, TaskService $taskService, TranslatorInterface $translator)
+    public function __construct(ManagerRegistry $doctrine, TaskRepository $taskRepository, TaskService $taskService, TranslatorInterface $translator)
     {
         $this->doctrine = $doctrine;
+
+        $this->taskRepository = $taskRepository;
 
         $this->taskService = $taskService;
 
@@ -31,22 +36,24 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks', name: 'app_task_list', methods: ['GET'])]
-    #[Route('/tasks/completed', name: 'app_task_completed_list', methods: ['GET'])]
+    #[Route('/tasks/current', name: 'app_task_current_list', methods: ['GET'])]
+    #[Route('/tasks/done', name: 'app_task_done_list', methods: ['GET'])]
     public function listAction(Request $request): Response
     {
         $userId = $this->getUser()->getId();
 
         $routeName = $request->attributes->get('_route');
-        if ($routeName == 'app_task_list') {
-            $taskIsDone = false;
+        if ($routeName == 'app_task_current_list') {
+            $task = $this->taskRepository->getCurrentTasks();
+        } else if ($routeName == 'app_task_done_list') {
+            $task = $this->taskRepository->getDoneTasks();
         } else {
-            $taskIsDone = true;
+            $task = $this->taskRepository->findAll();
         }
 
         return $this->render('task/list.html.twig', [
-            'tasks' => $this->doctrine->getRepository(Task::class)->findAll(),
-            'userId' => $userId,
-            'taskIsDone' => $taskIsDone,
+            'tasks' => $task,
+            'userId' => $userId
         ]);
     }
 
@@ -66,7 +73,7 @@ class TaskController extends AbstractController
             $message = $this->translator->trans('The task has been successfully added.');
             $this->addFlash('success', $message);
 
-            return $this->redirectToRoute('app_task_list');
+            return $this->redirectToRoute('app_task_current_list');
         }
 
         return $this->render('task/create.html.twig', ['form' => $form->createView()]);
@@ -123,9 +130,9 @@ class TaskController extends AbstractController
         $this->addFlash('success', $message);
 
         if ($task->getIsDone()) {
-            $redirection = $this->redirectToRoute('app_task_completed_list');
+            $redirection = $this->redirectToRoute('app_task_done_list');
         } else {
-            $redirection = $this->redirectToRoute('app_task_list');
+            $redirection = $this->redirectToRoute('app_task_current_list');
         }
 
         return $redirection;

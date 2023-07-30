@@ -56,7 +56,7 @@ class UserControllerTest extends WebTestCase
 
         $countUsers = $this->getCountUsers();
 
-        $this->assertCount($countUsers, $crawler->filter('.btn-success'));
+        $this->assertCount($countUsers, $crawler->filter('.btn.btn-success.btn-sm'));
     }
 
     public function testListActionNotLoggedIn()
@@ -69,7 +69,8 @@ class UserControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringNotContainsString('Liste des utilisateurs', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('Liste des utilisateurs',
+            $this->client->getResponse()->getContent());
 
         $countUsers = $this->getCountUsers();
 
@@ -120,7 +121,8 @@ class UserControllerTest extends WebTestCase
 
         $user = $this->entityManager->getRepository(User::class)->find(3);
 
-        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
+        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)
+            ->isPasswordValid($user, $formValues['user[password][first]']);
 
         $this->assertEquals($formValues['user[username]'], $user->getUsername());
         $this->assertTrue($passwordVerification);
@@ -148,7 +150,8 @@ class UserControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringNotContainsString('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été ajouté.',
+            $this->client->getResponse()->getContent());
 
         $countUsersAfterTest = $this->getCountUsers();
 
@@ -176,7 +179,8 @@ class UserControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringNotContainsString('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été ajouté.',
+            $this->client->getResponse()->getContent());
 
         $countUsersAfterTest = $this->getCountUsers();
 
@@ -197,7 +201,8 @@ class UserControllerTest extends WebTestCase
 
         $this->assertResponseRedirects();
 
-        $this->assertStringNotContainsString('L&#039;utilisateur a bien été ajouté.', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été ajouté.',
+            $this->client->getResponse()->getContent());
     }
 
     public function testEditAction()
@@ -206,7 +211,8 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit',
+            ['id' => $this->user->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -225,11 +231,13 @@ class UserControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringContainsString('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString('L&#039;utilisateur a bien été modifié.',
+            $this->client->getResponse()->getContent());
 
         $user = $this->entityManager->getRepository(User::class)->find($this->user->getId());
 
-        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
+        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)
+            ->isPasswordValid($user, $formValues['user[password][first]']);
 
         $this->assertEquals($formValues['user[username]'], $user->getUsername());
         $this->assertTrue($passwordVerification);
@@ -242,7 +250,8 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit',
+            ['id' => $this->user->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -259,11 +268,13 @@ class UserControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringNotContainsString('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été modifié.',
+            $this->client->getResponse()->getContent());
 
         $user = $this->entityManager->getRepository(User::class)->find($this->user->getId());
 
-        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
+        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)
+            ->isPasswordValid($user, $formValues['user[password][first]']);
 
         $this->assertNotEmpty($user->getUsername());
         $this->assertFalse($passwordVerification);
@@ -276,7 +287,8 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
+        $crawler = $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit',
+            ['id' => $this->user->getId()]));
 
         $buttonCrawlerNode = $crawler->selectButton('Modifier');
 
@@ -293,11 +305,13 @@ class UserControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringNotContainsString('L&#039;utilisateur a bien été modifié.', $this->client->getResponse()->getContent());
+        $this->assertStringNotContainsString('L&#039;utilisateur a bien été modifié.',
+            $this->client->getResponse()->getContent());
 
         $user = $this->entityManager->getRepository(User::class)->find($this->user->getId());
 
-        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)->isPasswordValid($user, $formValues['user[password][first]']);
+        $passwordVerification = $this->client->getContainer()->get(UserPasswordHasherInterface::class)
+            ->isPasswordValid($user, $formValues['user[password][first]']);
 
         $this->assertNotEquals($formValues['user[username]'], $user->getUsername());
         $this->assertFalse($passwordVerification);
@@ -312,7 +326,8 @@ class UserControllerTest extends WebTestCase
 
         $urlGenerator = $this->client->getContainer()->get('router');
 
-        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit', ['id' => $this->user->getId()]));
+        $this->client->request(Request::METHOD_GET, $urlGenerator->generate('app_user_edit',
+            ['id' => $this->user->getId()]));
 
         $this->client->followRedirect();
 
@@ -335,7 +350,8 @@ class UserControllerTest extends WebTestCase
 
         $this->assertResponseIsSuccessful();
 
-        $this->assertStringContainsString('L&#039;utilisateur a bien été supprimé.', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString('L&#039;utilisateur a bien été supprimé.',
+            $this->client->getResponse()->getContent());
 
         $userRemoved = $this->entityManager->getRepository(User::class)->find(2);
 

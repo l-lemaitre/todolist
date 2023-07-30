@@ -97,8 +97,7 @@ class UserController extends AbstractController
         } elseif ($user == $userConnected) {
             $this->userService->deleteUser($user);
 
-            $session = new Session();
-            $session->invalidate();
+            session_destroy();
 
             return $this->redirectToRoute('app_logout');
         } elseif ($this->isGranted('ROLE_ADMIN')) {

@@ -28,6 +28,12 @@ body {
 
 .slide-image {
     width: 100%;
+    margin: 20px 0;
+}
+
+.alert {
+    margin-top: 20px;
+    margin-bottom: 5px;
 }
 
 .carousel-holder {
@@ -73,10 +79,26 @@ footer {
 
 /* TASK LIST */
 .thumbnail {
-    margin-top: 2rem;
+    margin-top: 20px;
 }
 
 .action-buttons {
     display: flex;
     justify-content: space-around;
+}
+
+.btn-warning {
+    position: relative;
+    top: -0.7rem;
+}
+
+.caption-custom {
+    height: 138px;
+    padding: 9px;
+    overflow: auto;
+    color: #333;
+}
+
+.caption-custom > h4 + div {
+    margin-bottom: 10px;
 }
