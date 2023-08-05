@@ -11,9 +11,12 @@ before_script:
   - yarn install && yarn encore dev
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 before_install:
   - mysql -u root --password="" < test/todolist_test.sql
 install:
   - composer install
 script:
-  - vendor/bin/phpunit
+  - vendor/bin/phpunit --coverage-text
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
