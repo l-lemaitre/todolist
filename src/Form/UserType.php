@@ -41,6 +41,11 @@ class UserType extends AbstractType
             ])
         ;
 
+        $this->dataTransformer($builder);
+    }
+
+    public function dataTransformer(FormBuilderInterface $builder): void
+    {
         $builder->get('roles')
             ->addModelTransformer(new CallbackTransformer(
                 function ($rolesArray) {

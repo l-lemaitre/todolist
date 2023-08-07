@@ -10,3 +10,6 @@ Task %s was successfully marked as incomplete.: La tâche %s a bien été indiqu
 The task was not found.: La tâche n'a pas été trouvée.
 The task has been successfully deleted.: La tâche a été supprimée avec succès.
 Access denied. The task cannot be deleted.: Accès refusé. La tâche ne peut pas être supprimée.
+Role: Rôle
+User: Utilisateur
+Administrator: Administrateur
