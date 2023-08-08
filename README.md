@@ -34,3 +34,4 @@ Project 8 of the formation [Application Developer - PHP/Symfony of OpenClassroom
 ## Appendices ##
 - To contribute to the project, see this [document](/CONTRIBUTING.md).
 - The technical documentation authentification is accessible in french at this [URL](/appendices/lemaitre_ludovic_2_documentation_authentification_042023.pdf).
+- The code quality audit & application performance is accessible in french at this [URL](/appendices/lemaitre_ludovic_3_rapport_audit_042023.pdf).
